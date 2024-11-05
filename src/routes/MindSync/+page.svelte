@@ -25,6 +25,7 @@
     let showInstructions = false;
     let animationFrame;
     let gameStarted = false;
+    let isTransitioning = false;
     
     let playerGrid = [];
     let targetGrid = [];
@@ -127,28 +128,32 @@
         }
         
         draw(ctx) {
-            const progress = (Date.now() - this.startTime) / this.duration;
+            const progress = Math.min(Math.max((Date.now() - this.startTime) / this.duration, 0), 1);
             if (this.type === 'match') {
                 ctx.fillStyle = `rgba(255, 255, 255, ${0.8 * (1 - progress)})`;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 30 * progress, 0, Math.PI * 2);
+                const radius = Math.max(30 * progress, 0);
+                ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
                 ctx.fill();
                 
                 ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * (1 - progress)})`;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 35 * progress, 0, Math.PI * 2);
+                const outerRadius = Math.max(35 * progress, 0);
+                ctx.arc(this.x, this.y, outerRadius, 0, Math.PI * 2);
                 ctx.stroke();
             } else if (this.type === 'select') {
                 ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * (1 - progress)})`;
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 20 * (1 - progress), 0, Math.PI * 2);
+                const selectRadius = Math.max(20 * (1 - progress), 0);
+                ctx.arc(this.x, this.y, selectRadius, 0, Math.PI * 2);
                 ctx.stroke();
             } else if (this.type === 'swap') {
                 ctx.fillStyle = `rgba(255, 255, 255, ${0.5 * (1 - progress)})`;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 15 * (1 - progress), 0, Math.PI * 2);
+                const swapRadius = Math.max(15 * (1 - progress), 0);
+                ctx.arc(this.x, this.y, swapRadius, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -266,6 +271,7 @@
     }
 
     function celebrateLevelComplete() {
+        isTransitioning = true;
         const playerCellSize = canvas.width / (GRID_SIZE + 1);
         const targetCellSize = playerCellSize * 0.6;
         const gridArea = {
@@ -275,15 +281,54 @@
             height: playerCellSize * GRID_SIZE
         };
 
+        // Create celebratory particles
         for (let i = 0; i < GRID_SIZE; i++) {
             for (let j = 0; j < GRID_SIZE; j++) {
                 const x = gridArea.x + j * playerCellSize + playerCellSize/2;
                 const y = gridArea.y + i * playerCellSize + playerCellSize/2;
                 const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-                createCelebrationParticles(x, y, color, 'explode', 5);
-                createCelebrationParticles(x, y, color, 'sparkle', 3);
+                createCelebrationParticles(x, y, color, 'explode', 8);
+                createCelebrationParticles(x, y, color, 'sparkle', 5);
             }
         }
+
+        // Show level complete overlay
+        const timeBonus = Math.ceil(timeLeft * 10);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        const showOverlay = () => {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = 'bold 24px Arial';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'center';
+            ctx.fillText('Level Complete!', centerX, centerY - 40);
+            
+            ctx.font = '18px Arial';
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillText(`+${timeBonus} Time Bonus!`, centerX, centerY);
+            
+            ctx.restore();
+        };
+
+        let overlayDuration = 0;
+        const animateOverlay = () => {
+            draw();
+            showOverlay();
+            overlayDuration += 16;
+            
+            if (overlayDuration < 2000) {
+                requestAnimationFrame(animateOverlay);
+            } else {
+                isTransitioning = false;
+                nextLevel();
+            }
+        };
+        
+        animateOverlay();
     }
 
     function addCellAnimation(index, type) {
@@ -383,6 +428,120 @@
         }
     }
 
+    function nextLevel() {
+        if (isTransitioning) return;
+        
+        const oldGrid = [...playerGrid];
+        targetGrid = createRandomGrid();
+        playerGrid = createPlayerGrid(targetGrid);
+        timeLeft = Math.max(TIME_PER_TURN - Math.floor(score / 100), 10);
+        lastMatchCount = 0;
+        
+        // Animate transition to new level
+        let progress = 0;
+        const playerCellSize = canvas.width / (GRID_SIZE + 1);
+        const targetCellSize = playerCellSize * 0.6;
+        
+        const animateTransition = () => {
+            progress += 0.05;
+            if (progress <= 1) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw the target pattern
+                const targetOffsetX = (canvas.width - (targetCellSize * GRID_SIZE)) / 2;
+                drawGrid(targetGrid, targetCellSize, targetCellSize, false, targetOffsetX);
+                
+                // Draw old grid fading out
+                ctx.globalAlpha = 1 - progress;
+                drawGrid(oldGrid, playerCellSize, targetCellSize * (GRID_SIZE + 1.2), true);
+                
+                // Draw new grid fading in
+                ctx.globalAlpha = progress;
+                drawGrid(playerGrid, playerCellSize, targetCellSize * (GRID_SIZE + 1.2), true);
+                
+                ctx.globalAlpha = 1;
+                requestAnimationFrame(animateTransition);
+            } else {
+                draw();
+            }
+        };
+        
+        animateTransition();
+    }
+
+    function handleCellClick(index) {
+        if (!ctx || gameOver || !gameStarted || isTransitioning) return;
+        
+        if (selectedCell === null) {
+            selectedCell = index;
+            addCellAnimation(index, 'select');
+            draw();
+        } else {
+            const previousMatches = countMatches();
+            
+            // Animate the swap
+            const cell1 = selectedCell;
+            const cell2 = index;
+            let progress = 0;
+            let isAnimating = true;
+            
+            const animateSwap = () => {
+                if (!isAnimating) return;
+                
+                progress += 0.1;
+                if (progress <= 1) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    const playerCellSize = canvas.width / (GRID_SIZE + 1);
+                    const targetCellSize = playerCellSize * 0.6;
+                    const targetOffsetX = (canvas.width - (targetCellSize * GRID_SIZE)) / 2;
+                    
+                    // Draw target grid
+                    drawGrid(targetGrid, targetCellSize, targetCellSize, false, targetOffsetX);
+                    
+                    // Draw player grid with animated swap
+                    const tempGrid = [...playerGrid];
+                    if (progress < 1) {
+                        [tempGrid[cell1], tempGrid[cell2]] = [tempGrid[cell2], tempGrid[cell1]];
+                    }
+                    
+                    drawGrid(tempGrid, playerCellSize, targetCellSize * (GRID_SIZE + 1.2), true);
+                    
+                    requestAnimationFrame(animateSwap);
+                } else {
+                    isAnimating = false;
+                    
+                    [playerGrid[cell1], playerGrid[cell2]] = [playerGrid[cell2], playerGrid[cell1]];
+                    addCellAnimation(cell1, 'swap');
+                    addCellAnimation(cell2, 'swap');
+                    
+                    const newMatches = countMatches();
+                    if (newMatches > previousMatches) {
+                        score += (newMatches - previousMatches) * 5;
+                        const playerCellSize = canvas.width / (GRID_SIZE + 1);
+                        const targetCellSize = playerCellSize * 0.6;
+                        
+                        for(let i = 0; i < playerGrid.length; i++) {
+                            if(playerGrid[i] === targetGrid[i] && i !== cell1 && i !== cell2) {
+                                const x = playerCellSize * 0.5 + (i % GRID_SIZE) * playerCellSize + playerCellSize/2;
+                                const y = targetCellSize * (GRID_SIZE + 1.2) + Math.floor(i / GRID_SIZE) * playerCellSize + playerCellSize/2;
+                                celebrateMatch(x, y, playerGrid[i]);
+                                addCellAnimation(i, 'match');
+                            }
+                        }
+                    }
+                    
+                    selectedCell = null;
+                    playerGrid = [...playerGrid];
+                    checkForWin();
+                    draw();
+                }
+            };
+            
+            animateSwap();
+        }
+    }
+
     function handleClick(event) {
         if (!ctx || gameOver || !gameStarted) return;
         
@@ -396,34 +555,72 @@
         }
     }
 
-    function getCellFromCoordinates(x, y) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+    function countMatches() {
+        let matches = 0;
+        for (let i = 0; i < playerGrid.length; i++) {
+            if (playerGrid[i] === targetGrid[i]) matches++;
+        }
+        return matches;
+    }
+    
+    function checkForWin() {
+        const matches = countMatches();
+        if (matches === playerGrid.length) {
+            score += Math.ceil(timeLeft * 10);
+            if (score > highScore) {
+                highScore = score;
+                saveHighScore();
+            }
+            celebrateLevelComplete();
+        }
+    }
+    
+    function startNewGame() {
+        if (timer) clearInterval(timer);
+        if (animationFrame) cancelAnimationFrame(animationFrame);
         
-        // Scale the coordinates
-        const scaledX = x * scaleX;
-        const scaledY = y * scaleY;
+        gameStarted = true;
+        targetGrid = createRandomGrid();
+        playerGrid = createPlayerGrid(targetGrid);
+        score = 0;
+        timeLeft = TIME_PER_TURN;
+        gameOver = false;
+        selectedCell = null;
+        animations = [];
+        lastMatchCount = 0;
+        particles = [];
+        isTransitioning = false;
         
-        const playerCellSize = canvas.width / (GRID_SIZE + 1);
-        const targetCellSize = playerCellSize * 0.6;
-        const playerGridStartY = targetCellSize * (GRID_SIZE + 1.2);
+        timer = setInterval(() => {
+            if (!isTransitioning) {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }
+        }, 1000);
         
-        if (scaledY >= playerGridStartY) {
-            const gridX = Math.floor((scaledX - playerCellSize * 0.5) / playerCellSize);
-            const gridY = Math.floor((scaledY - playerGridStartY) / playerCellSize);
+        draw();
+    }
+    
+    function endGame() {
+        gameOver = true;
+        if (timer) clearInterval(timer);
+        
+        if (score > highScore) {
+            highScore = score;
+            saveHighScore();
             
-            if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE) {
-                return {
-                    index: gridY * GRID_SIZE + gridX,
-                    x: gridX,
-                    y: gridY
-                };
+            // Celebration particles for new high score
+            for(let i = 0; i < 150; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+                createCelebrationParticles(x, y, color, 'sparkle');
             }
         }
-        return null;
     }
-
+    
     function handleTouchStart(event) {
         event.preventDefault();
         if (!ctx || gameOver || !gameStarted) return;
@@ -450,114 +647,31 @@
         selectedCellTouch = null;
     }
 
-    
-
-    function handleCellClick(index) {
-        if (selectedCell === null) {
-            selectedCell = index;
-            addCellAnimation(index, 'select');
-        } else {
-            const previousMatches = countMatches();
-            
-            [playerGrid[selectedCell], playerGrid[index]] = [playerGrid[index], playerGrid[selectedCell]];
-            
-            addCellAnimation(selectedCell, 'swap');
-            addCellAnimation(index, 'swap');
-            
-            const newMatches = countMatches();
-            if (newMatches > previousMatches) {
-                score += (newMatches - previousMatches) * 5;
-                
-                const playerCellSize = canvas.width / (GRID_SIZE + 1);
-                const targetCellSize = playerCellSize * 0.6;
-                
-                for(let i = 0; i < playerGrid.length; i++) {
-                    if(playerGrid[i] === targetGrid[i] && i !== selectedCell && i !== index) {
-                        const x = playerCellSize * 0.5 + (i % GRID_SIZE) * playerCellSize + playerCellSize/2;
-                        const y = targetCellSize * (GRID_SIZE + 1.2) + Math.floor(i / GRID_SIZE) * playerCellSize + playerCellSize/2;
-                        celebrateMatch(x, y, playerGrid[i]);
-                        addCellAnimation(i, 'match');
-                    }
-                }
-            }
-            
-            selectedCell = null;
-            playerGrid = [...playerGrid];
-            checkForWin();
-        }
-        draw();
-    }
-
-    function countMatches() {
-        let matches = 0;
-        for (let i = 0; i < playerGrid.length; i++) {
-            if (playerGrid[i] === targetGrid[i]) matches++;
-        }
-        return matches;
-    }
-    
-    function checkForWin() {
-        const matches = countMatches();
-        if (matches === playerGrid.length) {
-            celebrateLevelComplete();
-            score += Math.ceil(timeLeft * 10);
-            if (score > highScore) {
-                highScore = score;
-                saveHighScore();
-            }
-            nextLevel();
-        }
-    }
-    
-    function startNewGame() {
-        if (timer) clearInterval(timer);
-        if (animationFrame) cancelAnimationFrame(animationFrame);
+    function getCellFromCoordinates(x, y) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
         
-        gameStarted = true;
-        targetGrid = createRandomGrid();
-        playerGrid = createPlayerGrid(targetGrid);
-        score = 0;
-        timeLeft = TIME_PER_TURN;
-        gameOver = false;
-        selectedCell = null;
-        animations = [];
-        lastMatchCount = 0;
-        particles = [];
+        const scaledX = x * scaleX;
+        const scaledY = y * scaleY;
         
-        timer = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 0) {
-                endGame();
-            }
-        }, 1000);
+        const playerCellSize = canvas.width / (GRID_SIZE + 1);
+        const targetCellSize = playerCellSize * 0.6;
+        const playerGridStartY = targetCellSize * (GRID_SIZE + 1.2);
         
-        draw();
-    }
-    
-    function nextLevel() {
-        targetGrid = createRandomGrid();
-        playerGrid = createPlayerGrid(targetGrid);
-        timeLeft = Math.max(TIME_PER_TURN - Math.floor(score / 100), 10);
-        lastMatchCount = 0;
-        draw();
-    }
-    
-    function endGame() {
-        gameOver = true;
-        if (timer) clearInterval(timer);
-        
-        if (score > highScore) {
-            highScore = score;
-            saveHighScore();
+        if (scaledY >= playerGridStartY) {
+            const gridX = Math.floor((scaledX - playerCellSize * 0.5) / playerCellSize);
+            const gridY = Math.floor((scaledY - playerGridStartY) / playerCellSize);
             
-            // Celebration particles for new high score
-            for(let i = 0; i < 150; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-                createCelebrationParticles(x, y, color, 'sparkle');
+            if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE) {
+                return {
+                    index: gridY * GRID_SIZE + gridX,
+                    x: gridX,
+                    y: gridY
+                };
             }
         }
+        return null;
     }
     
     let resizeTimer;
