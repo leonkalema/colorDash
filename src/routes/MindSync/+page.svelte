@@ -1,6 +1,6 @@
 <script>
     import { onMount } from 'svelte';
-    import { fade, slide } from 'svelte/transition';
+    import { fade, slide, scale } from 'svelte/transition';
     
     const GRID_SIZE = 4;
     const TIME_PER_TURN = 30;
@@ -47,9 +47,29 @@
       draw(ctx) {
         const progress = (Date.now() - this.startTime) / this.duration;
         if (this.type === 'match') {
-          ctx.fillStyle = `rgba(255, 255, 255, ${1 - progress})`;
+          // Enhanced match animation with ripple effect
+          ctx.fillStyle = `rgba(255, 255, 255, ${0.8 * (1 - progress)})`;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 30 * progress, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * (1 - progress)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 35 * progress, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (this.type === 'select') {
+          // Selection animation
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * (1 - progress)})`;
+          ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(this.x, this.y, 20 * (1 - progress), 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (this.type === 'swap') {
+          // Swap animation
+          ctx.fillStyle = `rgba(255, 255, 255, ${0.5 * (1 - progress)})`;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 15 * (1 - progress), 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -135,6 +155,18 @@
       
       return playerGrid;
     }
+
+    function addCellAnimation(index, type) {
+        const playerCellSize = canvas.width / (GRID_SIZE + 1);
+        const targetCellSize = playerCellSize * 0.6;
+        const x = playerCellSize * 0.5 + (index % GRID_SIZE) * playerCellSize;
+        const y = targetCellSize * (GRID_SIZE + 1.2) + Math.floor(index / GRID_SIZE) * playerCellSize;
+        animations.push(new Animation(x + playerCellSize/2, y + playerCellSize/2, type));
+        
+        if (!animationFrame) {
+            animationFrame = requestAnimationFrame(draw);
+        }
+    }
     
     function draw() {
       if (!ctx) return;
@@ -168,6 +200,8 @@
       
       if (animations.length > 0) {
         animationFrame = requestAnimationFrame(draw);
+      } else {
+        animationFrame = null;
       }
     }
   
@@ -240,20 +274,23 @@
     function handleCellClick(index) {
       if (selectedCell === null) {
         selectedCell = index;
+        addCellAnimation(index, 'select');
       } else {
         const previousMatches = countMatches();
         
         [playerGrid[selectedCell], playerGrid[index]] = [playerGrid[index], playerGrid[selectedCell]];
         
-        const playerCellSize = canvas.width / (GRID_SIZE + 1);
-        const x1 = playerCellSize * 0.5 + (selectedCell % GRID_SIZE) * playerCellSize;
-        const targetCellSize = playerCellSize * 0.6;
-        const y1 = targetCellSize * (GRID_SIZE + 1.2) + Math.floor(selectedCell / GRID_SIZE) * playerCellSize;
+        addCellAnimation(selectedCell, 'swap');
+        addCellAnimation(index, 'swap');
         
         const newMatches = countMatches();
         if (newMatches > previousMatches) {
           score += (newMatches - previousMatches) * 5;
-          animations = [...animations, new Animation(x1, y1, 'match')];
+          for(let i = 0; i < playerGrid.length; i++) {
+            if(playerGrid[i] === targetGrid[i] && i !== selectedCell && i !== index) {
+              addCellAnimation(i, 'match');
+            }
+          }
         }
         
         selectedCell = null;
@@ -322,20 +359,6 @@
         highScore = score;
         saveHighScore();
       }
-      
-      draw();
-      
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 24px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 2 - 40);
-      
-      ctx.font = '18px Arial';
-      ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
-      ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 30);
     }
   
     let resizeTimer;
@@ -347,9 +370,9 @@
       }, 250);
     }
 </script>
-  
-  <main class="min-h-screen bg-gray-100 p-2">
-    <div class="max-w-md mx-auto">
+
+<main class="min-h-screen bg-gray-100 p-2">
+    <div class="max-w-md mx-auto relative">
         <header class="bg-white rounded-lg shadow-sm p-3 mb-2">
             <h1 class="text-xl font-bold text-center mb-2">MindSync</h1>
             
@@ -367,63 +390,99 @@
                 
                 <div class="space-x-1">
                     <button
-                        class="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
-                        on:click={() => showInstructions = !showInstructions}
+                    class="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
+                    on:click={() => showInstructions = !showInstructions}
+                >
+                    Help
+                </button>
+                <button
+                    class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                    on:click={startNewGame}
+                >
+                    New
+                </button>
+            </div>
+        </div>
+    </header>
+
+    {#if showInstructions}
+        <div class="bg-white rounded-lg shadow-sm p-3 mb-2 text-sm" transition:slide>
+            <h2 class="font-bold mb-1">How to Play:</h2>
+            <ul class="space-y-1 text-gray-600">
+                <li>🎯 Match your grid to the target above</li>
+                <li>🔄 Tap two cells to swap colors</li>
+                <li>⏱️ Complete before time runs out</li>
+                <li>⭐ Score more by matching quickly</li>
+            </ul>
+        </div>
+    {/if}
+
+    <div class="bg-white rounded-lg shadow-sm p-3 relative">
+        <canvas
+            bind:this={canvas}
+            on:click={handleClick}
+            class="w-full"
+        ></canvas>
+
+        {#if gameOver}
+            <div 
+                class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-80"
+                transition:fade={{ duration: 300 }}
+            >
+                <div 
+                    class="text-center text-white space-y-4"
+                    transition:scale={{ duration: 300, delay: 300 }}
+                >
+                    <h2 class="text-3xl font-bold mb-4">Game Over!</h2>
+                    <p class="text-xl">Final Score: {score}</p>
+                    <p class="text-lg mb-6">High Score: {highScore}</p>
+                    <button
+                        class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transform hover:scale-105 transition-all duration-200 shadow-lg text-lg"
+                        on:click={startNewGame}
                     >
-                        Help
+                        Play Again
                     </button>
-                    {#if gameOver}
-                        <button
-                            class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-                            on:click={startNewGame}
-                        >
-                            Play Again
-                        </button>
-                    {:else}
-                        <button
-                            class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                            on:click={startNewGame}
-                        >
-                            New
-                        </button>
-                    {/if}
                 </div>
             </div>
-        </header>
-
-        {#if showInstructions}
-            <div class="bg-white rounded-lg shadow-sm p-3 mb-2 text-sm" transition:slide>
-                <h2 class="font-bold mb-1">How to Play:</h2>
-                <ul class="space-y-1 text-gray-600">
-                    <li>🎯 Match your grid to the target above</li>
-                    <li>🔄 Tap two cells to swap colors</li>
-                    <li>⏱️ Complete before time runs out</li>
-                    <li>⭐ Score more by matching quickly</li>
-                </ul>
-            </div>
         {/if}
-
-        <div class="bg-white rounded-lg shadow-sm p-3">
-            <canvas
-                bind:this={canvas}
-                on:click={handleClick}
-                class="w-full"
-            ></canvas>
-        </div>
     </div>
+</div>
 </main>
 
 <svelte:window on:resize={handleResize}/>
 
 <style>
-    :global(body) {
-        margin: 0;
-        padding: 0;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        -webkit-tap-highlight-color: transparent;
-    }
+:global(body) {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
 
-    canvas {
-        touch-action: none;
-    }
+canvas {
+    touch-action: none;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+:global(.transition-all) {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:global(.transform) {
+    transform: translateZ(0);
+}
+
+:global(.hover\:scale-105:hover) {
+    transform: scale(1.05);
+}
 </style>
