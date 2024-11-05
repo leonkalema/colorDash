@@ -349,7 +349,7 @@
   <main class="min-h-screen bg-gray-100 p-2">
     <div class="max-w-md mx-auto">
       <header class="bg-white rounded-lg shadow-sm p-3 mb-2">
-        <h1 class="text-xl font-bold text-center mb-2">MindSync</h1>
+        <h1 class="text-xl font-bold text-center mb-2"> MindSync </h1>
         
         <div class="flex justify-between items-center text-sm">
           <div class="space-y-0.5">
