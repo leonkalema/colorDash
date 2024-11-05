@@ -2,6 +2,7 @@
     import { onMount, onDestroy } from 'svelte';
     import { fade, fly, scale, slide } from 'svelte/transition';
     import { elasticOut, bounceOut } from 'svelte/easing';
+   
   
     // Audio Context and Sound Management
     let audioContext;
