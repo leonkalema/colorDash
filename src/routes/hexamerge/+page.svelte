@@ -234,65 +234,132 @@
     });
   </script>
   
- <main class="min-h-screen bg-gray-100 p-4">
-    <div class="max-w-xl mx-auto bg-white p-4">
-      <!-- Header Section -->
-      <h1 class="text-2xl font-bold text-center mb-4"> HexaMerge </h1>
-      
-      <!-- Score and Controls Row -->
-      <div class="flex justify-between items-center mb-4">
-        <div class="font-semibold">Score: {score}</div>
-        
-        <button
-          class="text-blue-600 hover:text-blue-800 px-2 py-1"
-          on:click={() => showInstructions = !showInstructions}
-        >
-          {showInstructions ? 'Hide Instructions' : 'How to Play'}
-        </button>
-        
-        <button
-          class="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          on:click={resetGame}
-        >
-          New Game
-        </button>
-      </div>
+  <main>
+    <div class="game-container">
+      <header>
+        <h1>HexaMerge</h1>
+        <div class="game-controls">
+          <span class="score">Score: {score}</span>
+          <button class="link-button" on:click={() => showInstructions = !showInstructions}>
+            How to Play
+          </button>
+          <button class="new-game-button" on:click={resetGame}>
+            New Game
+          </button>
+        </div>
+      </header>
   
-      <!-- Instructions (Collapsible) -->
       {#if showInstructions}
-        <div class="mb-4 bg-gray-50 p-3 rounded" transition:slide>
-          <ul class="space-y-1 text-sm text-gray-700">
-            <li>• Click empty spaces to place new tiles</li>
-            <li>• Adjacent tiles with the same number merge</li>
-            <li>• When tiles merge, they combine into a tile with double the value</li>
-            <li>• Try to create higher numbers and prevent the grid from filling up</li>
+        <div class="instructions" transition:slide>
+          <ul>
+            <li>Click empty spaces to place new tiles</li>
+            <li>Adjacent tiles with the same number merge</li>
+            <li>When tiles merge, they combine into a tile with double the value</li>
+            <li>Try to create higher numbers and prevent the grid from filling up</li>
           </ul>
         </div>
       {/if}
   
-      <!-- Game Canvas -->
       <canvas
         bind:this={canvas}
         on:click={handleClick}
-        class="w-full"
       ></canvas>
     </div>
   </main>
   
   <style>
-    canvas {
-      touch-action: none;
-    }
-    
     :global(body) {
       margin: 0;
       padding: 0;
-      background: #F3F4F6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f7;
     }
   
-    ul {
-      list-style: none;
-      padding: 0;
+    .game-container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+    }
+  
+    header {
+      margin-bottom: 20px;
+    }
+  
+    h1 {
       margin: 0;
+      padding: 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  
+    .game-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-top: 10px;
+    }
+  
+    .score {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  
+    .link-button {
+      background: none;
+      border: none;
+      color: #007AFF;
+      padding: 0;
+      font: inherit;
+      cursor: pointer;
+      text-decoration: none;
+    }
+  
+    .link-button:hover {
+      text-decoration: underline;
+    }
+  
+    .new-game-button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font: inherit;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+  
+    .new-game-button:hover {
+      background: #0056b3;
+    }
+  
+    .instructions {
+      background: #f8f9fa;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+  
+    .instructions ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+  
+    .instructions li {
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #333;
+    }
+  
+    .instructions li:last-child {
+      margin-bottom: 0;
+    }
+  
+    canvas {
+      width: 100%;
+      touch-action: none;
+      display: block;
     }
   </style>
