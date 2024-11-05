@@ -28,7 +28,7 @@
     let tiles = [];
     let isStarting = true;
     let showDifficultySelect = false;
-    let currentDifficulty = 'medium';
+    let currentDifficulty = 'easy';
   
     // Canvas Setup
     let canvas;
@@ -44,9 +44,9 @@
     const difficulties = {
       easy: {
         name: 'Easy',
-        initialSpeed: 1200,
-        speedReduction: 25,
-        minSpeed: 500,
+        initialSpeed: 2000,
+        speedReduction: 5,
+        minSpeed: 300,
         lives: 5,
         scoreMultiplier: 1,
         similarColors: false
