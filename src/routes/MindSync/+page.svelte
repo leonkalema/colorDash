@@ -694,6 +694,13 @@
                 <p class="text-gray-600 text-sm leading-relaxed max-w-sm mx-auto">
                     A pattern-matching puzzle game that challenges your memory and strategic thinking
                 </p>
+
+                <a
+                href="/"
+                class="px-3 py-1.5 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors font-medium text-sm"
+            >
+                Home
+            </a>
             </div>
 
             {#if gameStarted}
@@ -722,6 +729,8 @@
                         >
                             New Game
                         </button>
+
+                       
                     </div>
                 </div>
             {/if}
