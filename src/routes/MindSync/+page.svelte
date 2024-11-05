@@ -373,116 +373,157 @@
 
 <main class="min-h-screen bg-gray-100 p-2">
     <div class="max-w-md mx-auto relative">
-        <header class="bg-white rounded-lg shadow-sm p-3 mb-2">
-            <h1 class="text-xl font-bold text-center mb-2">MindSync</h1>
+        <header class="bg-white rounded-lg shadow-sm p-4 mb-3">
+            <div class="text-center mb-4">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent mb-2">
+                    MindSync
+                </h1>
+                <p class="text-gray-600 text-sm leading-relaxed max-w-sm mx-auto">
+                    A pattern-matching puzzle game that challenges your memory and strategic thinking
+                </p>
+            </div>
+
+            <div class="bg-blue-50 rounded-lg p-3 mb-4 text-sm leading-relaxed text-gray-700">
+                <p class="mb-2">
+                    Match the bottom grid to the target pattern above by swapping colors. Complete the pattern before time runs out to advance to the next level!
+                </p>
+                <div class="flex flex-wrap gap-3 text-xs">
+                    <span class="inline-flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        🧠 Train Memory
+                    </span>
+                    <span class="inline-flex items-center bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                        ⚡ Quick Thinking
+                    </span>
+                    <span class="inline-flex items-center bg-green-100 text-green-700 px-2 py-1 rounded">
+                        🎯 Pattern Matching
+                    </span>
+                </div>
+            </div>
             
-            <div class="flex justify-between items-center text-sm">
-                <div class="space-y-0.5">
-                    <div class="font-semibold">Score: {score}</div>
+            <div class="flex justify-between items-center text-sm border-t pt-3">
+                <div class="space-y-1">
+                    <div class="font-semibold text-lg">Score: {score}</div>
                     <div class="text-gray-600">Best: {highScore}</div>
                 </div>
                 
-                <div class="text-lg font-bold text-center">
-                    <div class={timeLeft <= 5 ? 'text-red-500' : ''}>
+                <div class="text-xl font-bold text-center">
+                    <div class={`${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-gray-700'}`}>
                         {timeLeft}s
                     </div>
                 </div>
                 
-                <div class="space-x-1">
+                <div class="space-x-2">
                     <button
-                    class="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
-                    on:click={() => showInstructions = !showInstructions}
-                >
-                    Help
-                </button>
-                <button
-                    class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                    on:click={startNewGame}
-                >
-                    New
-                </button>
-            </div>
-        </div>
-    </header>
-
-    {#if showInstructions}
-        <div class="bg-white rounded-lg shadow-sm p-3 mb-2 text-sm" transition:slide>
-            <h2 class="font-bold mb-1">How to Play:</h2>
-            <ul class="space-y-1 text-gray-600">
-                <li>🎯 Match your grid to the target above</li>
-                <li>🔄 Tap two cells to swap colors</li>
-                <li>⏱️ Complete before time runs out</li>
-                <li>⭐ Score more by matching quickly</li>
-            </ul>
-        </div>
-    {/if}
-
-    <div class="bg-white rounded-lg shadow-sm p-3 relative">
-        <canvas
-            bind:this={canvas}
-            on:click={handleClick}
-            class="w-full"
-        ></canvas>
-
-        {#if gameOver}
-            <div 
-                class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-80"
-                transition:fade={{ duration: 300 }}
-            >
-                <div 
-                    class="text-center text-white space-y-4"
-                    transition:scale={{ duration: 300, delay: 300 }}
-                >
-                    <h2 class="text-3xl font-bold mb-4">Game Over!</h2>
-                    <p class="text-xl">Final Score: {score}</p>
-                    <p class="text-lg mb-6">High Score: {highScore}</p>
+                        class="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors font-medium text-sm"
+                        on:click={() => showInstructions = !showInstructions}
+                    >
+                        {showInstructions ? 'Hide Help' : 'How to Play'}
+                    </button>
                     <button
-                        class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transform hover:scale-105 transition-all duration-200 shadow-lg text-lg"
+                        class="px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors font-medium text-sm"
                         on:click={startNewGame}
                     >
-                        Play Again
+                        New Game
                     </button>
                 </div>
             </div>
+        </header>
+
+        {#if showInstructions}
+            <div class="bg-white rounded-lg shadow-sm p-4 mb-3" transition:slide>
+                <h2 class="font-bold text-lg mb-3">How to Play:</h2>
+                <ul class="space-y-2.5 text-gray-700">
+                    <li class="flex items-start">
+                        <span class="mr-2 text-lg">🎯</span>
+                        <span>Study the target pattern at the top and recreate it in your grid below</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="mr-2 text-lg">🔄</span>
+                        <span>Click two cells to swap their colors and match the pattern</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="mr-2 text-lg">⏱️</span>
+                        <span>Complete the pattern before time runs out - work fast for bonus points!</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="mr-2 text-lg">⭐</span>
+                        <span>Score more points by making matches quickly and completing levels</span>
+                    </li>
+                </ul>
+            </div>
         {/if}
+
+        <div class="bg-white rounded-lg shadow-sm p-3 relative">
+            <canvas
+                bind:this={canvas}
+                on:click={handleClick}
+                class="w-full"
+            ></canvas>
+
+            {#if gameOver}
+                <div 
+                    class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-85"
+                    transition:fade={{ duration: 300 }}
+                >
+                    <div 
+                        class="text-center text-white space-y-4"
+                        transition:scale={{ duration: 300, delay: 300 }}
+                    >
+                        <h2 class="text-4xl font-bold mb-4">Game Over!</h2>
+                        <div class="space-y-2 mb-6">
+                            <p class="text-2xl">Final Score: <span class="text-blue-400">{score}</span></p>
+                            <p class="text-xl">High Score: <span class="text-purple-400">{highScore}</span></p>
+                        </div>
+                        <button
+                            class="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transform hover:scale-105 transition-all duration-200 shadow-lg text-lg font-medium"
+                            on:click={startNewGame}
+                        >
+                            Play Again
+                        </button>
+                    </div>
+                </div>
+            {/if}
+        </div>
     </div>
-</div>
 </main>
 
-<svelte:window on:resize={handleResize}/>
-
 <style>
-:global(body) {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    -webkit-tap-highlight-color: transparent;
-}
+    :global(body) {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+    }
 
-canvas {
-    touch-action: none;
-}
+    canvas {
+        touch-action: none;
+    }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
 
-.pulse {
-    animation: pulse 2s infinite;
-}
+    :global(.animate-pulse) {
+        animation: pulse 2s infinite;
+    }
 
-:global(.transition-all) {
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
+    :global(.bg-clip-text) {
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
 
-:global(.transform) {
-    transform: translateZ(0);
-}
+    :global(.transition-all) {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-:global(.hover\:scale-105:hover) {
-    transform: scale(1.05);
-}
+    :global(.transform) {
+        transform: translateZ(0);
+    }
+
+    :global(.hover\:scale-105:hover) {
+        transform: scale(1.05);
+    }
 </style>
