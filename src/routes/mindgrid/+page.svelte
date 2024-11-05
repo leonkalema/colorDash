@@ -291,78 +291,70 @@
     });
     </script>
     
-    <div class="min-h-screen bg-[#121212] text-black" bind:this={containerRef}>
-      <div class="max-w-[400px] mx-auto px-4 py-8">
-        <!-- Centered Game Name -->
-        <h1 class="text-xl font-medium text-center mb-8">MindGrid</h1>
-    
-        <!-- Stats Row -->
-        <div class="flex justify-center items-center gap-12 mb-8">
-          <div>
-            <span class="text-yellow-500">🏆</span>
-            <span class="ml-2">High Score:</span>
-            <span class="font-medium ml-1">{highScore}</span>
+    <div class="min-h-screen bg-white" bind:this={containerRef}>
+        <div class="max-w-[400px] mx-auto px-4 pt-12">
+          <!-- Game Header -->
+          <h1 class="text-2xl font-medium text-center mb-12">MindGrid</h1>
+      
+          <!-- Game Stats -->
+          <div class="flex justify-center gap-16 mb-8">
+            <div class="text-center">
+              <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                <span class="text-yellow-500 text-base">🏆</span>
+                <span>High Score</span>
+              </div>
+              <span class="text-xl font-medium">{highScore}</span>
+            </div>
+            <div class="text-center">
+              <div class="text-sm text-gray-600 mb-1">Score</div>
+              <span class="text-xl font-medium">{score}</span>
+            </div>
           </div>
-          <div>
-            <span class="ml-2">Score:</span>
-            <span class="font-medium ml-1">{score}</span>
+      
+          <!-- Game Info -->
+          <div class="flex justify-center gap-12 mb-8">
+            <div class="text-center">
+              <div class="text-sm text-gray-600 mb-1">Turns</div>
+              <span class="text-lg font-medium">{turnsLeft}</span>
+            </div>
+            <div class="text-center">
+              <div class="text-sm text-gray-600 mb-1">Time</div>
+              <span class="text-lg font-medium">{timeLeft}s</span>
+            </div>
           </div>
-        </div>
-        <button
-        class="content-center items-center h-12 bg-blue-500 text-white rounded-full font-medium"
-        on:click={initializeGame}
-      >
-        Retry
-      </button>
-        <!-- Game Stats -->
-        <div class="flex justify-center items-center gap-8 mb-6">
-          <div>
-            <span>Turns:</span>
-            <span class="font-medium ml-1">{turnsLeft}</span>
-          </div>
-          <div>
-            <span>Time:</span>
-            <span class="font-medium ml-1">{timeLeft}s</span>
-          </div>
-        </div>
-    
-        <!-- Game Canvas -->
-        
-
-        <div class="canvas-container">
+      
+          <!-- Game Canvas -->
+          <div class="aspect-square w-full mb-8">
             <canvas
-          bind:this={canvas}
-          class=" items-center w-auto aspect-square rounded-2xl mb-8 bg-[#121212]"
-          on:click={handleCanvasClick}
-        />
-
-
-
-    
+              bind:this={canvas}
+              class="w-full h-full rounded-2xl"
+              on:click={handleCanvasClick}
+            />
           </div>
-  
+      
+          <!-- Game Action -->
+          <div class="mb-12">
+            <button
+              class="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-colors"
+              on:click={initializeGame}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-    
-    <style>
-      :global(body) {
-        @apply bg-[#fff];
-      }
-    
-      canvas {
-        touch-action: none;
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      .canvas-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 70vh; 
-     }
-    
-      button:active {
-        transform: scale(0.98);
-      }
-
-    </style>
+      
+      <style>
+        :global(body) {
+          @apply bg-white;
+        }
+      
+        canvas {
+          touch-action: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+      
+        button:active {
+          transform: scale(0.98);
+        }
+      </style>
