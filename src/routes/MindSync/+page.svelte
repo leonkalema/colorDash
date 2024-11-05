@@ -309,7 +309,7 @@
             
             ctx.font = '18px Arial';
             ctx.fillStyle = '#4CAF50';
-            ctx.fillText(`+${timeBonus} Time Bonus!`, centerX, centerY);
+            ctx.fillText(`+${timeBonus} Points Bonus!`, centerX, centerY);
             
             ctx.restore();
         };
