@@ -16,10 +16,11 @@
     let timeLeft = 60;
     let currentMultiplier = 1;
     let gameOver = false;
+    let gameStarted = false;
+    let showTutorial = false;
     let hintCount = 3;
     let message = '';
     let isBonus = false;
-    let tutorial = true;
     let timer;
     let revealedTiles = new Set();
     let animations = [];
@@ -51,7 +52,8 @@
       trap: '#ef4444',
       bonus: '#8b5cf6',
       text: '#ffffff',
-      highlight: '#fbbf24'
+      highlight: '#fbbf24',
+      disabled: '#e5e7eb'
     };
     
     // Animation class
@@ -99,6 +101,11 @@
         
         ctx.restore();
       }
+    }
+    
+    function startGame() {
+        gameStarted = true;
+        initializeGame();
     }
     
     function initializeGame() {
@@ -171,7 +178,7 @@
     }
     
     function handleCanvasClick(event) {
-      if (gameOver || isBonus) return;
+      if (!gameStarted || gameOver || isBonus) return;
     
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
@@ -186,7 +193,7 @@
     }
     
     function handleTileClick(row, col) {
-      if (gameOver || revealedTiles.has(`${row}-${col}`)) return;
+      if (!gameStarted || gameOver || revealedTiles.has(`${row}-${col}`)) return;
     
       const tile = grid[row][col];
       revealedTiles.add(`${row}-${col}`);
@@ -205,16 +212,20 @@
       switch (tile.type) {
         case 'points':
           currentScore += pointValue * currentMultiplier;
+          message = `+${pointValue * currentMultiplier} points!`;
           break;
         case 'multiplier':
           currentMultiplier = pointValue;
+          message = `${pointValue}x Multiplier!`;
           break;
         case 'trap':
           currentScore += pointValue;
+          message = `${pointValue} points!`;
           break;
         case 'bonus':
           currentScore += pointValue;
           timeLeft += 10;
+          message = `Bonus! +${pointValue} points and +10s`;
           break;
       }
       
@@ -230,6 +241,7 @@
     
     function endGame() {
       gameOver = true;
+      gameStarted = false;
       clearInterval(timer);
     }
     
@@ -246,9 +258,15 @@
           const x = j * tileSize + gridOffset.x;
           const y = i * tileSize + gridOffset.y;
           
-          ctx.fillStyle = revealedTiles.has(`${i}-${j}`) ? 
-            colors[grid[i][j].type] : colors.unrevealed;
+          // Handle different states
+          let fillColor = colors.unrevealed;
+          if (gameOver) {
+            fillColor = colors.disabled;
+          } else if (revealedTiles.has(`${i}-${j}`)) {
+            fillColor = colors[grid[i][j].type];
+          }
           
+          ctx.fillStyle = fillColor;
           ctx.beginPath();
           ctx.roundRect(x, y, tileSize - 4, tileSize - 4, 10);
           ctx.fill();
@@ -264,11 +282,20 @@
         }
       }
       
+      // Draw animations
       animations = animations.filter(anim => !anim.done);
       animations.forEach(anim => {
         anim.update();
         anim.draw(ctx);
       });
+      
+      // Draw message if exists
+      if (message && !gameOver) {
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(message, containerWidth/2, containerHeight - 20);
+      }
       
       requestAnimationFrame(render);
     }
@@ -282,79 +309,203 @@
       });
       resizeObserver.observe(containerRef);
       
-      initializeGame();
-      
-      return () => {
+      calculateDimensions();
+    grid = [];
+    for (let i = 0; i < 6; i++) {
+        const row = [];
+        for (let j = 0; j < 6; j++) {
+            row.push(generateTile());
+        }
+        grid.push(row);
+    }
+    requestAnimationFrame(render);
+    
+    return () => {
         clearInterval(timer);
         resizeObserver.disconnect();
-      };
+    };
     });
     </script>
     
     <div class="min-h-screen bg-white" bind:this={containerRef}>
-        <div class="max-w-[400px] mx-auto px-4 pt-12">
-          <!-- Game Header -->
-          <h1 class="text-2xl font-medium text-center mb-12">MindGrid</h1>
-      
-          <!-- Game Stats -->
-          <div class="flex justify-center gap-16 mb-8">
-            <div class="text-center">
-              <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                <span class="text-yellow-500 text-base">🏆</span>
-                <span>High Score</span>
-              </div>
-              <span class="text-xl font-medium">{highScore}</span>
+        <div class="max-w-[400px] mx-auto px-4 pt-8">
+            <!-- Game Header -->
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-medium">MindGrid</h1>
+                <button
+                    class="px-4 h-10 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm font-medium transition-colors"
+                    on:click={() => showTutorial = true}
+                >
+                    How to Play
+                </button>
             </div>
-            <div class="text-center">
-              <div class="text-sm text-gray-600 mb-1">Score</div>
-              <span class="text-xl font-medium">{score}</span>
+    
+            <!-- Game Stats -->
+            <div class="flex justify-center gap-16 mb-6">
+                <div class="text-center">
+                    <div class="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                        <span class="text-yellow-500 text-base">🏆</span>
+                        <span>High Score</span>
+                    </div>
+                    <span class="text-xl font-medium">{highScore}</span>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-600 mb-1">Score</div>
+                    <span class="text-xl font-medium">{score}</span>
+                </div>
             </div>
-          </div>
-      
-          <!-- Game Info -->
-          <div class="flex justify-center gap-12 mb-8">
-            <div class="text-center">
-              <div class="text-sm text-gray-600 mb-1">Turns</div>
-              <span class="text-lg font-medium">{turnsLeft}</span>
+    
+            <!-- Game Info -->
+            <div class="flex justify-center gap-12 mb-6">
+                <div class="text-center">
+                    <div class="text-sm text-gray-600 mb-1">Turns</div>
+                    <span class="text-lg font-medium">{turnsLeft}</span>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-600 mb-1">Time</div>
+                    <span class="text-lg font-medium {timeLeft <= 10 ? 'text-red-500' : ''}">{timeLeft}s</span>
+                </div>
             </div>
-            <div class="text-center">
-              <div class="text-sm text-gray-600 mb-1">Time</div>
-              <span class="text-lg font-medium">{timeLeft}s</span>
+    
+            <!-- Game Canvas -->
+            <div class="aspect-square w-full mb-8 relative">
+                <canvas
+                    bind:this={canvas}
+                    class="w-full h-full rounded-2xl"
+                    class:opacity-50={gameOver}
+                    on:click={handleCanvasClick}
+                />
+                
+                <!-- Start Game Overlay -->
+                {#if !gameStarted && !gameOver}
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="bg-white/90 backdrop-blur-sm p-6 rounded-2xl text-center">
+                        <h2 class="text-xl font-medium mb-4">Ready to Play?</h2>
+                        <button
+                            class="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-colors"
+                            on:click={startGame}
+                        >
+                            Start Game
+                        </button>
+                    </div>
+                </div>
+                {/if}
+    
+                <!-- Game Over Overlay -->
+                {#if gameOver}
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="bg-white/90 backdrop-blur-sm p-6 rounded-2xl text-center">
+                        <h2 class="text-xl font-medium mb-2">Game Over!</h2>
+                        <p class="text-gray-600 mb-4">Final Score: {score}</p>
+                        {#if score > highScore}
+                        <p class="text-yellow-500 font-medium mb-4">🏆 New High Score!</p>
+                        {/if}
+                        <button
+                            class="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-colors"
+                            on:click={startGame}
+                        >
+                            Play Again
+                        </button>
+                    </div>
+                </div>
+                {/if}
             </div>
-          </div>
-      
-          <!-- Game Canvas -->
-          <div class="aspect-square w-full mb-8">
-            <canvas
-              bind:this={canvas}
-              class="w-full h-full rounded-2xl"
-              on:click={handleCanvasClick}
-            />
-          </div>
-      
-          <!-- Game Action -->
-          <div class="mb-12">
-            <button
-              class="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-colors"
-              on:click={initializeGame}
-            >
-              Retry
-            </button>
-          </div>
+    
+            <!-- Game Actions -->
+            {#if gameStarted && !gameOver}
+            <div class="mb-8">
+                <button
+                    class="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-colors"
+                    on:click={startGame}
+                >
+                    New Game
+                </button>
+            </div>
+            {/if}
         </div>
-      </div>
+    </div>
+    
+    <!-- Tutorial Modal -->
+    {#if showTutorial}
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full relative">
+            <!-- Close Button -->
+            <button 
+                class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                on:click={() => showTutorial = false}
+            >
+                ✕
+            </button>
+            
+            <h2 class="text-xl font-medium mb-6">How to Play</h2>
+            
+            <div class="space-y-6 mb-6">
+                <div>
+                    <h3 class="font-medium mb-3">Tile Types:</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3">
+                            <span class="text-xl">💎</span>
+                            <span class="text-sm text-gray-600">Points: Collect these to score</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-xl">✨</span>
+                            <span class="text-sm text-gray-600">Multipliers: Boost your score</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-xl">💣</span>
+                            <span class="text-sm text-gray-600">Traps: Avoid these!</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-xl">🎲</span>
+                            <span class="text-sm text-gray-600">Bonus: Extra points & time</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium mb-3">Rules:</h3>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <span class="block w-1 h-1 mt-1.5 rounded-full bg-gray-400"></span>
+                            <span>You have 60 seconds and 20 turns</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="block w-1 h-1 mt-1.5 rounded-full bg-gray-400"></span>
+                            <span>Click tiles to reveal them</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="block w-1 h-1 mt-1.5 rounded-full bg-gray-400"></span>
+                            <span>Get multipliers before high-value tiles</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="block w-1 h-1 mt-1.5 rounded-full bg-gray-400"></span>
+                            <span>Watch out for traps!</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+    
+            <button
+                class="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-colors"
+                on:click={() => showTutorial = false}
+            >
+                Got it!
+            </button>
+        </div>
+    </div>
+    {/if}
       
       <style>
-        :global(body) {
-          @apply bg-white;
-        }
-      
-        canvas {
-          touch-action: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-      
-        button:active {
-          transform: scale(0.98);
-        }
+         :global(body) {
+    @apply bg-white;
+  }
+
+  canvas {
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
       </style>
