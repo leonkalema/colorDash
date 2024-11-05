@@ -160,19 +160,26 @@ function generateTile() {
 function calculateDimensions() {
     if (!containerRef) return;
     
+    // Make canvas exactly square based on container width
     containerWidth = Math.min(400, containerRef.getBoundingClientRect().width - 32);
     containerHeight = containerWidth;
     
-    tileSize = (containerWidth - 24) / 6;
+    // Calculate exact tile size for 6x6 grid
+    tileSize = Math.floor(containerWidth / 6); // Make it a whole number
     
+    // Calculate grid offset to center the grid perfectly
     gridOffset = {
-        x: 12,
-        y: 12
+        x: Math.floor((containerWidth - (tileSize * 6)) / 2),
+        y: Math.floor((containerWidth - (tileSize * 6)) / 2)
     };
     
     if (canvas) {
-        canvas.width = containerWidth;
-        canvas.height = containerHeight;
+        canvas.width = containerWidth * window.devicePixelRatio;
+        canvas.height = containerHeight * window.devicePixelRatio;
+        canvas.style.width = `${containerWidth}px`;
+        canvas.style.height = `${containerHeight}px`;
+        ctx = canvas.getContext('2d');
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     }
 }
 
@@ -180,12 +187,19 @@ function handleCanvasClick(event) {
     if (!gameStarted || gameOver || isBonus) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
     
+    // Get exact click coordinates
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (event.clientX - rect.left) * scaleX / window.devicePixelRatio;
+    const y = (event.clientY - rect.top) * scaleY / window.devicePixelRatio;
+
+    // Calculate tile position using exact coordinates
     const col = Math.floor((x - gridOffset.x) / tileSize);
     const row = Math.floor((y - gridOffset.y) / tileSize);
-    
+
+    // Validate click is within grid
     if (row >= 0 && row < 6 && col >= 0 && col < 6) {
         handleTileClick(row, col);
     }
