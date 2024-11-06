@@ -843,7 +843,7 @@
     }
 
     canvas {
-        touch-action: none;
+        touch-action: auto;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
