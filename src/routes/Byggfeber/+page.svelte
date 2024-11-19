@@ -171,53 +171,75 @@
   </script>
   
   <svelte:head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Byggfeber - Tetris Game</title>
-  </svelte:head>
-  
-  <div class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-    <div class="text-center w-full max-w-lg mx-auto">
-      <h1 class="text-4xl font-bold text-white mb-4 md:mb-8">Byggfeber</h1>
-      <div class="text-white mb-4">
-        <p class="text-xl">Score: {gameState.score}</p>
-        <p class="text-xl">High Score: {highScore}</p>
-      </div>
-      
-      <!-- Game container with fixed aspect ratio -->
-      <div class="relative w-full aspect-[10/16] max-h-[70vh] mb-4">
-        <GameCanvas {gameState} />
-      </div>
-      
-      <!-- Controls -->
-      {#if !isMobile}
-        <GameControls {gameState} onRestart={startGame} />
-      {:else}
-        <button
-          class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors mb-4"
-          on:click={startGame}
-        >
-          {gameState.gameOver ? 'Play Again' : 'New Game'}
-        </button>
-        <TouchControls 
-          onMove={handleMove}
-          onRotate={handleRotate}
-        />
-      {/if}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Byggfeber - Tetris Game</title>
+</svelte:head>
+
+<div class="min-h-screen bg-gray-900 flex flex-col">
+  <!-- Header Section -->
+  <div class="w-full p-4 flex-none">
+    <h1 class="text-4xl font-bold text-white text-center">Byggfeber</h1>
+    <div class="text-white text-center mt-2">
+      <p class="text-xl">Score: {gameState.score}</p>
+      <p class="text-xl">High Score: {highScore}</p>
     </div>
   </div>
+
+  <!-- Game Section with Padding for Controls -->
+  <div class="flex-1 relative w-full px-4 pb-32 pt-4"> <!-- Added pb-32 for control space -->
+    <div class="h-full max-w-lg mx-auto">
+      <div class="relative w-full h-full">
+        <GameCanvas {gameState} />
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Section - Fixed at Bottom -->
+  {#if !isMobile}
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-gray-900">
+      <div class="max-w-lg mx-auto">
+        <GameControls {gameState} onRestart={startGame} />
+      </div>
+    </div>
+  {:else}
+    <div class="fixed bottom-0 left-0 right-0 flex flex-col items-center bg-gray-900/80 backdrop-blur-sm">
+      {#if gameState.gameOver}
+        <button
+          class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors my-4"
+          on:click={startGame}
+        >
+          Play Again
+        </button>
+      {/if}
+      <TouchControls 
+        onMove={handleMove}
+        onRotate={handleRotate}
+      />
+    </div>
+  {/if}
+</div>
+
+<style>
+  /* Prevent scrolling on mobile devices */
+  :global(body) {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
   
-  <style>
-    /* Prevent scrolling on mobile devices */
-    :global(body) {
-      overflow: hidden;
-      position: fixed;
-      width: 100%;
-      height: 100%;
-    }
-    
-    /* Prevent text selection */
-    :global(*) {
-      user-select: none;
-      -webkit-user-select: none;
-    }
-  </style>
+  /* Prevent text selection */
+  :global(*) {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Ensure proper sizing on iOS */
+  :global(html, body) {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+</style>

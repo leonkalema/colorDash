@@ -13,33 +13,39 @@
   function resizeCanvas() {
     if (!canvas || !container) return;
     
+    // Get the container dimensions
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
     
-    // Maintain game aspect ratio
+    // Calculate the game aspect ratio
     const gameAspectRatio = GAME_WIDTH / GAME_HEIGHT;
     const containerAspectRatio = containerWidth / containerHeight;
     
-    let width, height;
+    let width, height, scale;
+    
+    // Calculate the best fit while maintaining aspect ratio
     if (containerAspectRatio > gameAspectRatio) {
       // Container is wider than game ratio
       height = containerHeight;
       width = height * gameAspectRatio;
+      scale = height / GAME_HEIGHT;
     } else {
       // Container is taller than game ratio
       width = containerWidth;
       height = width / gameAspectRatio;
+      scale = width / GAME_WIDTH;
     }
     
-    // Set canvas display size
+    // Apply the calculated dimensions
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     
-    // Set canvas resolution (internal size)
+    // Maintain crisp pixels by using the device pixel ratio
+    const dpr = window.devicePixelRatio || 1;
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
     
-    // Scale context to match display size
+    // Configure the context
     if (ctx) {
       ctx.imageSmoothingEnabled = false;
     }
@@ -49,8 +55,14 @@
     ctx = canvas.getContext('2d')!;
     resizeCanvas();
     
+    // Use ResizeObserver for smoother handling of size changes
     resizeObserver = new ResizeObserver(resizeCanvas);
     resizeObserver.observe(container);
+    
+    // Also listen for orientation changes
+    window.addEventListener('orientationchange', () => {
+      setTimeout(resizeCanvas, 100); // Small delay to ensure new dimensions are available
+    });
   });
 
   onDestroy(() => {
@@ -64,10 +76,13 @@
   }
 </script>
 
-<div class="w-full h-full relative" bind:this={container}>
+<div 
+  class="w-full h-full relative flex items-center justify-center" 
+  bind:this={container}
+>
   <canvas
     bind:this={canvas}
-    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-4 border-purple-500 rounded-lg shadow-lg bg-gray-100"
+    class="border-4 border-purple-500 rounded-lg shadow-lg bg-gray-100"
     style="touch-action: none;"
   />
 </div>
