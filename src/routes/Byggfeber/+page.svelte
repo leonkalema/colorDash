@@ -181,10 +181,10 @@
   <title>Byggfeber - Tetris Game</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-900 flex flex-col">
-  <div class="w-full py-1 flex-none">
+<div class="min-h-screen bg-gray-900 flex flex-col" >
+  <div class="w-full py-1 flex-none" style="z-index: 9999;">
     <h3 class="text-2xl font-bold text-white text-center">Byggfeber</h3>
-    <div class="text-white text-center mt-2 flex items-center justify-center gap-3">
+    <div class="text-white text-center mt-2 flex items-center justify-center gap-3 ">
       <p class="text-xl">High Score: {highScore}</p>
       {#if highScore > 0}
         <button
