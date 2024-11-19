@@ -183,7 +183,7 @@
 
 <div class="min-h-screen bg-gray-900 flex flex-col">
   <div class="w-full py-1 flex-none">
-    <h1 class="text-2xl font-bold text-white text-center">Byggfeber</h1>
+    <h3 class="text-2xl font-bold text-white text-center">Byggfeber</h3>
     <div class="text-white text-center mt-2 flex items-center justify-center gap-3">
       <p class="text-xl">High Score: {highScore}</p>
       {#if highScore > 0}
@@ -202,7 +202,7 @@
     </div>
   </div>
 
-  <div class="flex-1 flex items-center justify-center px-4 pb-24">
+  <div class="flex-1 flex items-center justify-center px-2 pb-32 mt-[-100px]">
     <div class="w-full max-w-sm">
       <GameCanvas {gameState} />
     </div>
