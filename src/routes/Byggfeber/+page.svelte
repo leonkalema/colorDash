@@ -182,7 +182,7 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gray-900 flex flex-col">
-  <div class="w-full py-2 flex-none">
+  <div class="w-full py-1 flex-none">
     <h1 class="text-2xl font-bold text-white text-center">Byggfeber</h1>
     <div class="text-white text-center mt-2 flex items-center justify-center gap-3">
       <p class="text-xl">High Score: {highScore}</p>
@@ -202,7 +202,7 @@
     </div>
   </div>
 
-  <div class="flex-1 flex items-center justify-center px-4 pb-28">
+  <div class="flex-1 flex items-center justify-center px-4 pb-24">
     <div class="w-full max-w-sm">
       <GameCanvas {gameState} />
     </div>
