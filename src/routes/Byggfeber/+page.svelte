@@ -3,6 +3,7 @@
     import GameCanvas from '$lib/components/byggfeber/GameCanvas.svelte';
     import GameControls from '$lib/components/byggfeber/GameControls.svelte';
     import TouchControls from '$lib/components/byggfeber/TouchControls.svelte';
+    import ShareDialog from '$lib/components/byggfeber/ShareDialog.svelte';
     import { createShape, updateGameState, moveShape, rotateShape } from '$lib/utils/byygfeber/gameLogic';
     import type { GameState } from '$lib/types';
   
@@ -13,6 +14,7 @@
       fallenBlocks: []
     };
   
+    let showShareDialog = false;
     let highScore = 0;
     let gameLoop: number;
     let lastTime = 0;
@@ -20,6 +22,14 @@
     const FPS = 60;
     const frameTime = 1000 / FPS;
   
+    function handleShare() {
+      showShareDialog = true;
+    }
+
+    function handleCloseShare() {
+      showShareDialog = false;
+    }
+
     function saveGameState() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('tetrisGameState', JSON.stringify(gameState));
@@ -122,7 +132,6 @@
       saveGameState();
     }
   
-    // Handle page visibility changes
     function handleVisibilityChange() {
       if (document.hidden && gameLoop) {
         cancelAnimationFrame(gameLoop);
@@ -134,15 +143,12 @@
     
     onMount(() => {
       if (typeof window !== 'undefined') {
-        // Check if device is mobile
         isMobile = window.matchMedia('(max-width: 768px)').matches;
         
-        // Only add keyboard events on desktop
         if (!isMobile) {
           window.addEventListener('keydown', handleKeydown);
         }
         
-        // Handle page visibility
         document.addEventListener('visibilitychange', handleVisibilityChange);
         
         const savedState = loadGameState();
@@ -168,30 +174,40 @@
         saveGameState();
       }
     });
-  </script>
+</script>
   
-  <svelte:head>
+<svelte:head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Byggfeber - Tetris Game</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-900 flex flex-col">
-  <!-- Header Section -->
   <div class="w-full py-2 flex-none">
     <h1 class="text-2xl font-bold text-white text-center">Byggfeber</h1>
-    <div class="text-white text-center mt-2">
+    <div class="text-white text-center mt-2 flex items-center justify-center gap-3">
       <p class="text-xl">High Score: {highScore}</p>
+      {#if highScore > 0}
+        <button
+          class="inline-flex items-center gap-2 px-3 py-1 bg-purple-500 hover:bg-purple-600 rounded-full text-sm font-medium transition-colors"
+          on:click={handleShare}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+          Share
+        </button>
+      {/if}
     </div>
   </div>
 
-  <!-- Game Container -->
-  <div class="flex-1 flex items-center justify-center px-4 pb-28"> <!-- Reduced padding bottom -->
-    <div class="w-full max-w-sm"> <!-- Reduced max width -->
+  <div class="flex-1 flex items-center justify-center px-4 pb-28">
+    <div class="w-full max-w-sm">
       <GameCanvas {gameState} />
     </div>
   </div>
 
-  <!-- Controls Section -->
   {#if !isMobile}
     <div class="fixed bottom-0 left-0 right-0 p-4 bg-gray-900">
       <div class="max-w-lg mx-auto">
@@ -213,6 +229,13 @@
         onRotate={handleRotate}
       />
     </div>
+  {/if}
+
+  {#if showShareDialog}
+    <ShareDialog 
+      score={highScore} 
+      onClose={handleCloseShare}
+    />
   {/if}
 </div>
 
