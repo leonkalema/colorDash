@@ -1,6 +1,17 @@
 import type { GameState } from '../../types';
 import { GAME_WIDTH, GAME_HEIGHT, BLOCK_SIZE } from '../../types';
 
+// Sponsorship messages configuration
+const sponsorMessages = [
+  'sponsored by www.learnatventures.com',
+  'learn more at learnatventures.com',
+  'built with learnatventures.com'
+];
+
+let currentMessageIndex = 0;
+let lastMessageChange = 0;
+const MESSAGE_CHANGE_INTERVAL = 5000; // Change message every 5 seconds
+
 function drawBlock(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
   ctx.fillStyle = color;
   ctx.fillRect(x, y, BLOCK_SIZE, BLOCK_SIZE);
@@ -18,7 +29,42 @@ function drawBlock(ctx: CanvasRenderingContext2D, x: number, y: number, color: s
   ctx.fill();
 }
 
+function drawSponsorMessage(ctx: CanvasRenderingContext2D, timestamp: number) {
+  // Change message periodically
+  if (timestamp - lastMessageChange > MESSAGE_CHANGE_INTERVAL) {
+    currentMessageIndex = (currentMessageIndex + 1) % sponsorMessages.length;
+    lastMessageChange = timestamp;
+  }
+
+  const message = sponsorMessages[currentMessageIndex];
+  
+  // Set up the text style
+  ctx.save();
+  ctx.font = '16px Arial';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.07)'; // Very subtle transparency
+  ctx.textAlign = 'center';
+  
+  // Calculate position (in the middle of the playing field)
+  const x = GAME_WIDTH / 2;
+  const y = GAME_HEIGHT / 2;
+  
+  // Create diagonal repeating pattern
+  for (let i = -2; i <= 2; i++) {
+    const offsetY = y + (i * 100);
+    // Add slight rotation for diagonal effect
+    ctx.save();
+    ctx.translate(x, offsetY);
+    ctx.rotate(-Math.PI / 8); // Rotate text slightly
+    ctx.fillText(message, 0, 0);
+    ctx.restore();
+  }
+  
+  ctx.restore();
+}
+
 export function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState): void {
+  const timestamp = performance.now();
+  
   // Clear canvas with a darker background
   ctx.fillStyle = '#1a1a2e';
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
@@ -30,6 +76,9 @@ export function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState): v
       ctx.strokeRect(x, y, BLOCK_SIZE, BLOCK_SIZE);
     }
   }
+  
+  // Draw sponsor message in background
+  drawSponsorMessage(ctx, timestamp);
   
   // Draw fallen blocks
   gameState.fallenBlocks.forEach(block => {
@@ -44,13 +93,12 @@ export function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState): v
   }
   
   // Draw score with better visibility
-  // Semi-transparent background for score
   const scoreText = `Score: ${gameState.score}`;
   ctx.font = 'bold 24px Arial';
   const scoreWidth = ctx.measureText(scoreText).width;
   const padding = 10;
   const scoreX = GAME_WIDTH - scoreWidth - padding;
-  const scoreY = padding + 24; // Font size + padding
+  const scoreY = padding + 24;
 
   // Draw score background
   ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -61,8 +109,8 @@ export function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState): v
     24 + padding
   );
 
-  // Draw score text with glow effect
-  ctx.fillStyle = '#FFD700'; // Golden color
+  // Draw score text
+  ctx.fillStyle = '#FFD700';
   ctx.fillText(scoreText, scoreX, scoreY);
   
   // Game over overlay
