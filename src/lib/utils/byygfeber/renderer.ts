@@ -19,8 +19,9 @@ function drawBlock(ctx: CanvasRenderingContext2D, x: number, y: number, color: s
 }
 
 export function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState): void {
-  // Clear canvas
-  ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  // Clear canvas with a darker background
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
   
   // Draw background grid
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
@@ -42,19 +43,39 @@ export function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState): v
     });
   }
   
-  // Draw score
-  ctx.fillStyle = '#fff';
-  ctx.font = '20px Arial';
-  ctx.fillText(`Score: ${gameState.score}`, 10, 30);
+  // Draw score with better visibility
+  // Semi-transparent background for score
+  const scoreText = `Score: ${gameState.score}`;
+  ctx.font = 'bold 24px Arial';
+  const scoreWidth = ctx.measureText(scoreText).width;
+  const padding = 10;
+  const scoreX = GAME_WIDTH - scoreWidth - padding;
+  const scoreY = padding + 24; // Font size + padding
+
+  // Draw score background
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(
+    scoreX - padding,
+    padding,
+    scoreWidth + padding * 2,
+    24 + padding
+  );
+
+  // Draw score text with glow effect
+  ctx.fillStyle = '#FFD700'; // Golden color
+  ctx.fillText(scoreText, scoreX, scoreY);
   
+  // Game over overlay
   if (gameState.gameOver) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    ctx.fillStyle = '#fff';
-    ctx.font = '48px Arial';
+    
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('Game Over!', GAME_WIDTH / 2, GAME_HEIGHT / 2);
-    ctx.font = '24px Arial';
+    
+    ctx.font = 'bold 24px Arial';
     ctx.fillText(`Final Score: ${gameState.score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
   }
 }

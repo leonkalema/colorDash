@@ -28,7 +28,7 @@
       width = height * targetRatio;
     } else {
       // Screen is taller than target ratio
-      width = Math.min(availableWidth, 400); // Cap max width
+      width = Math.min(availableWidth, 400); 
       height = width / targetRatio;
     }
     
