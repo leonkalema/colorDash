@@ -190,7 +190,7 @@
       
       <!-- Controls -->
       {#if !isMobile}
-        <GameControls {gameState} {onRestart} />
+        <GameControls {gameState} onRestart={startGame} />
       {:else}
         <button
           class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors mb-4"
