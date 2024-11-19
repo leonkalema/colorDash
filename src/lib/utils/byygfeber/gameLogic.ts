@@ -1,5 +1,16 @@
 import type { Block, Shape, GameState } from '../../types';
-import { BLOCK_SIZE, GAME_WIDTH, GAME_HEIGHT, COLORS, FALL_SPEED, SHAPES } from '../../types';
+import { BLOCK_SIZE, GAME_WIDTH, GAME_HEIGHT, COLORS, SHAPES } from '../../types';
+
+const BASE_FALL_SPEED = 0.5;
+
+function calculateLevel(score: number): number {
+  return Math.floor(score / 1000) + 1;
+}
+
+function calculateFallSpeed(score: number): number {
+  const level = calculateLevel(score);
+  return BASE_FALL_SPEED + (level - 1) * 2;
+}
 
 export function createShape(): Shape {
   const shapeIndex = Math.floor(Math.random() * SHAPES.length);
@@ -39,7 +50,6 @@ export function rotateShape(shape: Shape): Shape {
     };
   });
 
-  // Check if rotation is valid
   if (newBlocks.every(block => 
     block.x >= 0 && 
     block.x + BLOCK_SIZE <= GAME_WIDTH && 
@@ -114,24 +124,23 @@ export function checkCompletedRows(gameState: GameState): void {
 export function updateGameState(gameState: GameState): void {
   if (!gameState.currentShape || gameState.gameOver) return;
   
+  const fallSpeed = calculateFallSpeed(gameState.score);
+  
   const newBlocks = gameState.currentShape.blocks.map(block => ({
     ...block,
-    y: block.y + FALL_SPEED
+    y: block.y + fallSpeed
   }));
   
   const newShape = { blocks: newBlocks, rotation: gameState.currentShape.rotation };
   
   if (isColliding(newShape, gameState.fallenBlocks)) {
-    // Add current shape to fallen blocks
     gameState.fallenBlocks.push(...gameState.currentShape.blocks);
     
-    // Check if game is over
     if (gameState.currentShape.blocks.some(block => block.y <= BLOCK_SIZE)) {
       gameState.gameOver = true;
       return;
     }
     
-    // Create new shape
     gameState.currentShape = createShape();
     checkCompletedRows(gameState);
   } else {

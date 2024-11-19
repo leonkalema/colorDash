@@ -11,6 +11,10 @@ let currentMessageIndex = 0;
 let lastMessageChange = 0;
 const MESSAGE_CHANGE_INTERVAL = 5000;
 
+function calculateLevel(score: number): number {
+  return Math.floor(score / 1000) + 1;
+}
+
 function drawBlock(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
   ctx.fillStyle = color;
   ctx.fillRect(x, y, BLOCK_SIZE, BLOCK_SIZE);
@@ -80,23 +84,30 @@ export function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState): v
     });
   }
   
+  const level = calculateLevel(gameState.score);
   const scoreText = `Score: ${gameState.score}`;
+  const levelText = `Level: ${level}`;
   ctx.font = 'bold 24px Arial';
   const scoreWidth = ctx.measureText(scoreText).width;
+  const levelWidth = ctx.measureText(levelText).width;
   const padding = 10;
   const scoreX = GAME_WIDTH - scoreWidth - padding;
   const scoreY = padding + 24;
+  const levelY = scoreY + 30;
 
+  // Score background
   ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
   ctx.fillRect(
     scoreX - padding,
     padding,
     scoreWidth + padding * 2,
-    24 + padding
+    54 + padding
   );
 
+  // Draw score and level
   ctx.fillStyle = '#FFD700';
   ctx.fillText(scoreText, scoreX, scoreY);
+  ctx.fillText(levelText, scoreX, levelY);
   
   if (gameState.gameOver) {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
@@ -109,12 +120,12 @@ export function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState): v
     
     ctx.font = 'bold 24px Arial';
     ctx.fillText(`Final Score: ${gameState.score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 25);
+    ctx.fillText(`Level: ${level}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 55);
 
-    // Draw restart button
     const buttonWidth = 160;
     const buttonHeight = 50;
     const buttonX = GAME_WIDTH / 2 - buttonWidth / 2;
-    const buttonY = GAME_HEIGHT / 2 + 60;
+    const buttonY = GAME_HEIGHT / 2 + 80;
     
     ctx.fillStyle = '#4CAF50';
     ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
