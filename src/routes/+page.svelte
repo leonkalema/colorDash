@@ -12,6 +12,14 @@
       href: '/MindSync'
     },
     {
+      id: 'Byggfeber',
+      title: 'Byggfeber',
+      description: 'A fast-paced, strategic block-stacking game where quick thinking and precision build your way to victory',
+      color: 'from-blue-500 to-yellow-600',
+      icon: '🏗️',
+      href: '/Byggfeber'
+    },
+    {
       id: 'colordash',
       title: 'Color Dash',
       description: 'Quick reflexes meet color matching in this fast-paced challenge',
