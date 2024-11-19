@@ -4,6 +4,7 @@
     
     let touchStartX = 0;
     let touchStartY = 0;
+    let downInterval: number | null = null;
     const SWIPE_THRESHOLD = 30;
   
     function handleTouchStart(event: TouchEvent) {
@@ -20,11 +21,31 @@
         event.preventDefault();
         if (action === 'rotate') {
           onRotate();
+        } else if (action === 'down') {
+          downInterval = setInterval(() => onMove('down'), 5);
         } else {
           onMove(action);
         }
       }
     }
+
+    function handleButtonRelease(action: 'left' | 'right' | 'down' | 'rotate') {
+      return (event: TouchEvent) => {
+        event.preventDefault();
+        if (action === 'down' && downInterval) {
+          clearInterval(downInterval);
+          downInterval = null;
+        }
+      }
+    }
+
+    // Cleanup on component destroy
+    import { onDestroy } from 'svelte';
+    onDestroy(() => {
+      if (downInterval) {
+        clearInterval(downInterval);
+      }
+    });
   </script>
   
   <div class="fixed bottom-0 left-0 right-0 p-4 bg-gray-900/80 backdrop-blur-sm">
@@ -52,6 +73,7 @@
         <button
           class="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center active:bg-gray-600 touch-none"
           on:touchstart={handleButtonTouch('down')}
+          on:touchend={handleButtonRelease('down')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 9l6 6 6-6"/>
