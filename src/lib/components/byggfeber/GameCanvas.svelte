@@ -13,39 +13,33 @@
   function resizeCanvas() {
     if (!canvas || !container) return;
     
-    // Get the container dimensions
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    // Get available space (accounting for controls)
+    const availableHeight = window.innerHeight - 300; // Reserve space for header and controls
+    const availableWidth = container.clientWidth;
     
-    // Calculate the game aspect ratio
-    const gameAspectRatio = GAME_WIDTH / GAME_HEIGHT;
-    const containerAspectRatio = containerWidth / containerHeight;
+    // Target a mobile-friendly game size (2:3 aspect ratio)
+    const targetRatio = 2/3;
+    const currentRatio = availableWidth / availableHeight;
     
-    let width, height, scale;
-    
-    // Calculate the best fit while maintaining aspect ratio
-    if (containerAspectRatio > gameAspectRatio) {
-      // Container is wider than game ratio
-      height = containerHeight;
-      width = height * gameAspectRatio;
-      scale = height / GAME_HEIGHT;
+    let width, height;
+    if (currentRatio > targetRatio) {
+      // Screen is wider than target ratio
+      height = Math.min(availableHeight, 600); // Cap max height
+      width = height * targetRatio;
     } else {
-      // Container is taller than game ratio
-      width = containerWidth;
-      height = width / gameAspectRatio;
-      scale = width / GAME_WIDTH;
+      // Screen is taller than target ratio
+      width = Math.min(availableWidth, 400); // Cap max width
+      height = width / targetRatio;
     }
     
-    // Apply the calculated dimensions
+    // Apply sizes while maintaining pixel ratio
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     
-    // Maintain crisp pixels by using the device pixel ratio
-    const dpr = window.devicePixelRatio || 1;
+    // Set internal resolution
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
     
-    // Configure the context
     if (ctx) {
       ctx.imageSmoothingEnabled = false;
     }
@@ -55,13 +49,11 @@
     ctx = canvas.getContext('2d')!;
     resizeCanvas();
     
-    // Use ResizeObserver for smoother handling of size changes
     resizeObserver = new ResizeObserver(resizeCanvas);
     resizeObserver.observe(container);
     
-    // Also listen for orientation changes
     window.addEventListener('orientationchange', () => {
-      setTimeout(resizeCanvas, 100); // Small delay to ensure new dimensions are available
+      setTimeout(resizeCanvas, 100);
     });
   });
 
