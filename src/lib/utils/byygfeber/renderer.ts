@@ -2,10 +2,12 @@ import type { GameState } from '../../types';
 import { GAME_WIDTH, GAME_HEIGHT, BLOCK_SIZE } from '../../types';
 
 const sponsorMessages = [
-  'sponsored by www.learnatventures.com',
-  'learn more at learnatventures.com',
-  'built with learnatventures.com'
+  'Now enrolling: LearnAtVentures.com',
+  'Join us today at LearnAtVentures.com',
+  'World-class learning: LearnAtVentures.com'
 ];
+
+
 
 let currentMessageIndex = 0;
 let lastMessageChange = 0;
@@ -40,8 +42,8 @@ function drawSponsorMessage(ctx: CanvasRenderingContext2D, timestamp: number) {
   const message = sponsorMessages[currentMessageIndex];
   
   ctx.save();
-  ctx.font = '16px Arial';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+  ctx.font = '15px Arial';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
   ctx.textAlign = 'center';
   
   const x = GAME_WIDTH / 2;
